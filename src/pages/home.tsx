@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
 import { cn } from '../lib/utils'
@@ -20,6 +20,14 @@ const Home = () => {
       setSelectedCell((prev) => [...prev, value])
     }
   }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [selectedCell])
 
   return (
     <div className="flex justify-center items-center h-screen">
