@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
 import { cn } from '../lib/utils'
@@ -11,7 +11,6 @@ const Home = () => {
     '6X6': 6,
   }
   const [isPaused, setIsPaused] = useState(false)
-  const clickRef = useRef(null)
   const selectedGridSize = gridSize[state]
 
   const handleSelectCell = (rowIndex: number, colIndex: number) => {
@@ -24,21 +23,24 @@ const Home = () => {
   }
 
   useEffect(() => {
-    if (!isPaused) {
+    if (selectedCell.length > 0) {
+      const timer = setTimeout(() => {
+        setIsPaused(false)
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [selectedCell])
+
+  useEffect(() => {
+    if (!isPaused && selectedCell.length > 0) {
       const timer = setTimeout(() => {
         setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
       }, 1000)
 
       return () => clearTimeout(timer)
-    } else {
-      const timer = setTimeout(() => {
-        setIsPaused(false)
-      }, 1000)
-
-
-      return () => clearTimeout(timer)
     }
-  }, [selectedCell, isPaused])
+  }, [isPaused, selectedCell])
 
   return (
     <div className="flex justify-center items-center h-screen">
