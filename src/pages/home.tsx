@@ -10,6 +10,7 @@ const Home = () => {
     '4X4': 4,
     '6X6': 6,
   }
+  const [isPaused, setIsPaused] = useState(false)
   const selectedGridSize = gridSize[state]
 
   const handleSelectCell = (rowIndex: number, colIndex: number) => {
@@ -22,12 +23,24 @@ const Home = () => {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
-    }, 1000)
+    if (selectedCell.length > 0) {
+      const timer = setTimeout(() => {
+        setIsPaused(false)
+      }, 1000)
 
-    return () => clearTimeout(timer)
+      return () => clearTimeout(timer)
+    }
   }, [selectedCell])
+
+  useEffect(() => {
+    if (!isPaused && selectedCell.length > 0) {
+      const timer = setTimeout(() => {
+        setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [isPaused, selectedCell])
 
   return (
     <div className="flex justify-center items-center h-screen">
@@ -37,7 +50,10 @@ const Home = () => {
             {[...Array(selectedGridSize)].map((_, colIndex) => (
               <CommonButton
                 key={colIndex as number}
-                onClick={() => handleSelectCell(rowIndex, colIndex)}
+                onClick={() => {
+                  handleSelectCell(rowIndex, colIndex)
+                  setIsPaused(true)
+                }}
                 className={cn(
                   'border border-secondary w-24 h-24 m-1 cursor-pointer',
                   selectedCell.includes(rowIndex * selectedGridSize + colIndex)
