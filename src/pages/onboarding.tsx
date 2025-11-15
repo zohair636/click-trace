@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
 import CommonCard from '../components/common/card/common-card'
@@ -7,7 +7,6 @@ import { cn } from '../lib/utils'
 
 const Onboarding = () => {
   const navigate = useNavigate()
-  const id = useId()
   const [selectGrid, setSelectGrid] = useState<string | null>('4X4')
 
   const handleSelectGrid = (option: string) => {
@@ -30,10 +29,16 @@ const Onboarding = () => {
             headerClassName="text-center text-xl"
             onClick={() => handleSelectGrid('4X4')}
           >
-            {[...Array(4)].map((_) => (
-              <div key={id} className="flex justify-center items-center">
-                {[...Array(4)].map((_) => (
-                  <div key={id} className="border border-white px-1 py-2 w-5" />
+            {[...Array(4)].map((_, rowIndex) => (
+              <div
+                key={rowIndex as number}
+                className="flex justify-center items-center"
+              >
+                {[...Array(4)].map((_, colIndex) => (
+                  <div
+                    key={colIndex as number}
+                    className="border border-white px-1 py-2 w-5"
+                  />
                 ))}
               </div>
             ))}
@@ -49,10 +54,16 @@ const Onboarding = () => {
             headerClassName="text-center text-xl"
             onClick={() => handleSelectGrid('6X6')}
           >
-            {[...Array(6)].map((_) => (
-              <div key={id} className="flex justify-center items-center">
-                {[...Array(6)].map((_) => (
-                  <div key={id} className="border border-white px-1 py-2 w-5" />
+            {[...Array(6)].map((_, rowIndex) => (
+              <div
+                key={rowIndex as number}
+                className="flex justify-center items-center"
+              >
+                {[...Array(6)].map((_, colIndex) => (
+                  <div
+                    key={colIndex as number}
+                    className="border border-white px-1 py-2 w-5"
+                  />
                 ))}
               </div>
             ))}

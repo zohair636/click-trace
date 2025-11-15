@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
+import { Label } from '../components/ui/label'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
-import { Label } from '../components/ui/label'
 
 const Home = () => {
   const { state } = useLocation()
   const [selectedCell, setSelectedCell] = useState<number[]>([])
+  const [randomPattern, setRandomPattern] = useState<number[]>([])
   const gridSize: Record<string, number> = {
     '4X4': 4,
     '6X6': 6,
@@ -47,6 +48,35 @@ const Home = () => {
     }
   }, [isPaused, selectedCell])
 
+  useEffect(() => {
+    const grid = selectedGridSize * selectedGridSize
+    const timer = setTimeout(() => {
+      while (randomPattern.length < selectedGridSize) {
+        const randomIndex = Math.floor(Math.random() * grid)
+        if (randomPattern.includes(randomIndex)) {
+          setRandomPattern((prev) =>
+            prev.filter((cell) => cell !== randomIndex),
+          )
+        } else {
+          setRandomPattern((prev) => [...prev, randomIndex])
+        }
+        return randomPattern
+      }
+    }, 600)
+
+    return () => clearTimeout(timer)
+  }, [randomPattern, selectedGridSize])
+
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     if (randomPattern.length === selectedGridSize) {
+  //       setRandomPattern([])
+  //     }
+  //   }, 600)
+
+  //   return () => clearTimeout(timer)
+  // }, [randomPattern, selectedGridSize])
+
   return (
     <div className="flex flex-col justify-center items-center h-screen">
       <div className="w-fit">
@@ -62,16 +92,23 @@ const Home = () => {
                 <CommonButton
                   key={colIndex as number}
                   onClick={() => {
+                    if (randomPattern.length > 0) return
                     handleSelectCell(rowIndex, colIndex)
                     setIsPaused(true)
                   }}
                   className={cn(
-                    'border border-secondary w-24 h-24 m-1 cursor-pointer',
+                    'border border-secondary w-24 h-24 m-1',
+                    randomPattern.length > 0
+                      ? 'cursor-default'
+                      : 'cursor-pointer',
                     selectedCell.includes(
                       rowIndex * selectedGridSize + colIndex,
                     )
                       ? 'bg-primary'
                       : 'bg-transparent',
+                    randomPattern.includes(
+                      rowIndex * selectedGridSize + colIndex,
+                    ) && 'bg-primary opacity-40',
                   )}
                 />
               ))}
