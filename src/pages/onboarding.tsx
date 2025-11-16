@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
 import CommonCard from '../components/common/card/common-card'
 import { cn } from '../lib/utils'
+import { useAppStore } from '../store/app-store'
 
 const Onboarding = () => {
   const navigate = useNavigate()
   const [selectGrid, setSelectGrid] = useState<string | null>('4X4')
+  const setIsStarted = useAppStore((state) => state.setIsStarted)
 
   const handleSelectGrid = (option: string) => {
     setSelectGrid(option)
@@ -76,7 +78,10 @@ const Onboarding = () => {
         rightIcon={
           <ArrowRight className="w-4.5! h-4.5! group-hover:ml-2 duration-200" />
         }
-        onClick={() => navigate('/home', { state: selectGrid })}
+        onClick={() => {
+          navigate('/home', { state: selectGrid })
+          setIsStarted(true)
+        }}
       />
     </div>
   )

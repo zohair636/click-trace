@@ -4,6 +4,7 @@ import CommonButton from '../components/common/button/common-button'
 import { Label } from '../components/ui/label'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
+import { useAppStore } from '../store/app-store'
 
 const Home = () => {
   const { state } = useLocation()
@@ -14,6 +15,9 @@ const Home = () => {
     '6X6': 6,
   }
   const [isPaused, setIsPaused] = useState(false)
+  const setIsStarted = useAppStore((state) => state.setIsStarted)
+  const isStarted = useAppStore((state) => state.isStarted)
+
   const selectedGridSize = gridSize[state]
   const totalCell = selectedGridSize * selectedGridSize
   const filledCells = selectedCell.length
@@ -49,33 +53,38 @@ const Home = () => {
   }, [isPaused, selectedCell])
 
   useEffect(() => {
+    if (randomPattern.length === selectedGridSize) {
+      setIsStarted(false)
+    }
     const grid = selectedGridSize * selectedGridSize
-    const timer = setTimeout(() => {
-      while (randomPattern.length < selectedGridSize) {
-        const randomIndex = Math.floor(Math.random() * grid)
-        if (randomPattern.includes(randomIndex)) {
-          setRandomPattern((prev) =>
-            prev.filter((cell) => cell !== randomIndex),
-          )
-        } else {
-          setRandomPattern((prev) => [...prev, randomIndex])
+    if (isStarted) {
+      const timer = setTimeout(() => {
+        while (randomPattern.length < selectedGridSize) {
+          const randomIndex = Math.floor(Math.random() * grid)
+          if (randomPattern.includes(randomIndex)) {
+            setRandomPattern((prev) =>
+              prev.filter((cell) => cell !== randomIndex),
+            )
+          } else {
+            setRandomPattern((prev) => [...prev, randomIndex])
+          }
+          return randomPattern
         }
-        return randomPattern
+      }, 600)
+
+      return () => clearTimeout(timer)
+    }
+  }, [randomPattern, selectedGridSize, setIsStarted, isStarted])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (randomPattern.length === selectedGridSize) {
+        setRandomPattern([])
       }
-    }, 600)
+    }, 1000)
 
     return () => clearTimeout(timer)
   }, [randomPattern, selectedGridSize])
-
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     if (randomPattern.length === selectedGridSize) {
-  //       setRandomPattern([])
-  //     }
-  //   }, 600)
-
-  //   return () => clearTimeout(timer)
-  // }, [randomPattern, selectedGridSize])
 
   return (
     <div className="flex flex-col justify-center items-center h-screen">
