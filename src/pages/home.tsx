@@ -59,26 +59,27 @@ const Home = () => {
     const grid = selectedGridSize * selectedGridSize
     if (isStarted) {
       const timer = setTimeout(() => {
-        while (randomPattern.length < selectedGridSize) {
+        const newArray: number[] = []
+        while (newArray.length < selectedGridSize) {
           const randomIndex = Math.floor(Math.random() * grid)
-          if (randomPattern.includes(randomIndex)) {
-            setRandomPattern((prev) =>
-              prev.filter((cell) => cell !== randomIndex),
-            )
-          } else {
-            setRandomPattern((prev) => [...prev, randomIndex])
+          if (!newArray.includes(randomIndex)) {
+            newArray.push(randomIndex)
           }
-          return randomPattern
+        }
+        for (let i = 0; i < newArray.length; i++) {
+          setTimeout(() => {
+            setRandomPattern((prev) => [...prev, newArray[i]])
+          }, i * 600)
         }
       }, 600)
 
       return () => clearTimeout(timer)
     }
-  }, [randomPattern, selectedGridSize, setIsStarted, isStarted])
+  }, [selectedGridSize, randomPattern, setIsStarted, isStarted])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (randomPattern.length === selectedGridSize) {
+      if (randomPattern.length >= selectedGridSize) {
         setRandomPattern([])
       }
     }, 1000)
