@@ -15,6 +15,8 @@ const Home = () => {
     '6X6': 6,
   }
   const [isPaused, setIsPaused] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null)
+  const [displayIndex, setDisplayIndex] = useState(0)
   const setIsStarted = useAppStore((state) => state.setIsStarted)
   const isStarted = useAppStore((state) => state.isStarted)
 
@@ -68,19 +70,30 @@ const Home = () => {
       const timer = setTimeout(() => {
         setRandomPattern(newArray)
       }, 600)
+
       return () => clearTimeout(timer)
     }
   }, [randomPattern, isStarted, selectedGridSize, setIsStarted])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (randomPattern.length >= selectedGridSize) {
-        setRandomPattern([])
-      }
-    }, 1000)
+    if (displayIndex < randomPattern.length) {
+      setHighlightedIndex(randomPattern[displayIndex])
 
-    return () => clearTimeout(timer)
-  }, [randomPattern, selectedGridSize])
+      const timer = setTimeout(() => {
+        setDisplayIndex((prev) => prev + 1)
+      }, 800)
+
+      return () => clearTimeout(timer)
+    } else if (
+      displayIndex >= randomPattern.length &&
+      randomPattern.length > 0
+    ) {
+      setIsStarted(false)
+      setRandomPattern([])
+      setDisplayIndex(0)
+      setHighlightedIndex(null)
+    }
+  }, [displayIndex, randomPattern, setIsStarted])
 
   return (
     <div className="flex flex-col justify-center items-center h-screen">
@@ -102,7 +115,7 @@ const Home = () => {
                     setIsPaused(true)
                   }}
                   className={cn(
-                    'border border-secondary w-24 h-24 m-1',
+                    'border border-secondary w-24 h-24 m-1 transition-all fade-in ease-in-out',
                     randomPattern.length > 0
                       ? 'cursor-default'
                       : 'cursor-pointer',
@@ -111,9 +124,9 @@ const Home = () => {
                     )
                       ? 'bg-primary'
                       : 'bg-transparent',
-                    randomPattern.includes(
-                      rowIndex * selectedGridSize + colIndex,
-                    ) && 'bg-primary opacity-40',
+                    highlightedIndex ===
+                      rowIndex * selectedGridSize + colIndex &&
+                      'bg-primary opacity-40',
                   )}
                 />
               ))}
