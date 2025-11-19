@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
+import { Label } from '../components/ui/label'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
-import { Label } from '../components/ui/label'
+import { useAppStore } from '../store/app-store'
 
 const Home = () => {
   const { state } = useLocation()
   const [selectedCell, setSelectedCell] = useState<number[]>([])
+  const [randomPattern, setRandomPattern] = useState<number[]>([])
   const gridSize: Record<string, number> = {
     '4X4': 4,
     '6X6': 6,
   }
   const [isPaused, setIsPaused] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null)
+  const [displayIndex, setDisplayIndex] = useState(0)
+  const setIsStarted = useAppStore((state) => state.setIsStarted)
+  const isStarted = useAppStore((state) => state.isStarted)
+
   const selectedGridSize = gridSize[state]
   const totalCell = selectedGridSize * selectedGridSize
   const filledCells = selectedCell.length
@@ -47,6 +54,47 @@ const Home = () => {
     }
   }, [isPaused, selectedCell])
 
+  useEffect(() => {
+    if (randomPattern.length === selectedGridSize) {
+      setIsStarted(false)
+    }
+    if (isStarted) {
+      const grid = selectedGridSize * selectedGridSize
+      const newArray: number[] = []
+      while (newArray.length < selectedGridSize) {
+        const randomIndex = Math.floor(Math.random() * grid)
+        if (!newArray.includes(randomIndex)) {
+          newArray.push(randomIndex)
+        }
+      }
+      const timer = setTimeout(() => {
+        setRandomPattern(newArray)
+      }, 600)
+
+      return () => clearTimeout(timer)
+    }
+  }, [randomPattern, isStarted, selectedGridSize, setIsStarted])
+
+  useEffect(() => {
+    if (displayIndex < randomPattern.length) {
+      setHighlightedIndex(randomPattern[displayIndex])
+
+      const timer = setTimeout(() => {
+        setDisplayIndex((prev) => prev + 1)
+      }, 800)
+
+      return () => clearTimeout(timer)
+    } else if (
+      displayIndex >= randomPattern.length &&
+      randomPattern.length > 0
+    ) {
+      setIsStarted(false)
+      setRandomPattern([])
+      setDisplayIndex(0)
+      setHighlightedIndex(null)
+    }
+  }, [displayIndex, randomPattern, setIsStarted])
+
   return (
     <div className="flex flex-col justify-center items-center h-screen">
       <div className="w-fit">
@@ -62,16 +110,23 @@ const Home = () => {
                 <CommonButton
                   key={colIndex as number}
                   onClick={() => {
+                    if (randomPattern.length > 0) return
                     handleSelectCell(rowIndex, colIndex)
                     setIsPaused(true)
                   }}
                   className={cn(
-                    'border border-secondary w-24 h-24 m-1 cursor-pointer',
+                    'border border-secondary w-24 h-24 m-1 transition-all fade-in ease-in-out',
+                    randomPattern.length > 0
+                      ? 'cursor-default'
+                      : 'cursor-pointer',
                     selectedCell.includes(
                       rowIndex * selectedGridSize + colIndex,
                     )
                       ? 'bg-primary'
                       : 'bg-transparent',
+                    highlightedIndex ===
+                      rowIndex * selectedGridSize + colIndex &&
+                      'bg-primary opacity-40',
                   )}
                 />
               ))}
