@@ -15,10 +15,19 @@ const Home = () => {
     '6X6': 6,
   }
   const [isPaused, setIsPaused] = useState(false)
+  const [isPatternMatched, setIsPatternMatched] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [displayIndex, setDisplayIndex] = useState(0)
+  const [allowedMistakes, setAllowedMistakes] = useState(3)
+  const [color, setColor] = useState<'success' | 'error' | 'default'>('default')
   const setIsStarted = useAppStore((state) => state.setIsStarted)
   const isStarted = useAppStore((state) => state.isStarted)
+  const colorVariants = {
+    success: 'bg-green-800',
+    error: 'bg-red-800',
+    default: 'bg-primary',
+  }
 
   const selectedGridSize = gridSize[state]
   const totalCell = selectedGridSize * selectedGridSize
@@ -27,6 +36,7 @@ const Home = () => {
 
   const handleSelectCell = (rowIndex: number, colIndex: number) => {
     const value = rowIndex * selectedGridSize + colIndex
+    setSelectedIndex(value)
     if (selectedCell.includes(value)) {
       setSelectedCell((prev) => prev.filter((cell) => cell !== value))
     } else {
@@ -45,24 +55,23 @@ const Home = () => {
   }, [selectedCell])
 
   useEffect(() => {
-    if (!isPaused && selectedCell.length > 0) {
+    if (!isPaused && selectedCell.length > 0 && isPatternMatched) {
       const timer = setTimeout(() => {
         setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
-      }, 1000)
+      }, 1400)
 
       return () => clearTimeout(timer)
     }
-  }, [isPaused, selectedCell])
+  }, [isPaused, selectedCell, isPatternMatched])
 
   useEffect(() => {
     if (randomPattern.length === selectedGridSize) {
       setIsStarted(false)
     }
     if (isStarted) {
-      const grid = selectedGridSize * selectedGridSize
       const newArray: number[] = []
       while (newArray.length < selectedGridSize) {
-        const randomIndex = Math.floor(Math.random() * grid)
+        const randomIndex = Math.floor(Math.random() * totalCell)
         if (!newArray.includes(randomIndex)) {
           newArray.push(randomIndex)
         }
@@ -73,15 +82,15 @@ const Home = () => {
 
       return () => clearTimeout(timer)
     }
-  }, [randomPattern, isStarted, selectedGridSize, setIsStarted])
+  }, [randomPattern, isStarted, selectedGridSize, setIsStarted, totalCell])
 
   useEffect(() => {
     if (displayIndex < randomPattern.length) {
       setHighlightedIndex(randomPattern[displayIndex])
-
+      setIsPaused(true)
       const timer = setTimeout(() => {
         setDisplayIndex((prev) => prev + 1)
-      }, 800)
+      }, 1400)
 
       return () => clearTimeout(timer)
     } else if (
@@ -89,11 +98,34 @@ const Home = () => {
       randomPattern.length > 0
     ) {
       setIsStarted(false)
-      setRandomPattern([])
-      setDisplayIndex(0)
+      setIsPaused(false)
+      // setRandomPattern([])
+      // setDisplayIndex(0)
       setHighlightedIndex(null)
     }
   }, [displayIndex, randomPattern, setIsStarted])
+
+  const handlePatternColors = () => {
+    if (randomPattern.every((value) => selectedCell.includes(value))) {
+      setIsPatternMatched(true)
+    }
+    if (randomPattern.includes(selectedIndex)) {
+      setColor('success')
+      const timer = setTimeout(() => {
+        setColor('default')
+      }, 800)
+
+      return () => clearTimeout(timer)
+    } else {
+      setAllowedMistakes((prev) => prev - 1)
+      setColor('error')
+      const timer = setTimeout(() => {
+        setColor('default')
+      }, 800)
+
+      return () => clearTimeout(timer)
+    }
+  }
 
   return (
     <div className="flex flex-col justify-center items-center h-screen">
@@ -110,24 +142,25 @@ const Home = () => {
                 <CommonButton
                   key={colIndex as number}
                   onClick={() => {
-                    if (randomPattern.length > 0) return
+                    if (isPaused) return
                     handleSelectCell(rowIndex, colIndex)
-                    setIsPaused(true)
+                    handlePatternColors()
                   }}
                   className={cn(
-                    'border border-secondary w-24 h-24 m-1 transition-all fade-in ease-in-out',
+                    'border border-secondary md:w-24 md:h-24 sm:w-20 sm:h-20 w-16 h-16 m-1 transition-all fade-in ease-in-out',
                     randomPattern.length > 0
                       ? 'cursor-default'
                       : 'cursor-pointer',
                     selectedCell.includes(
                       rowIndex * selectedGridSize + colIndex,
                     )
-                      ? 'bg-primary'
+                      ? colorVariants[color]
                       : 'bg-transparent',
                     highlightedIndex ===
                       rowIndex * selectedGridSize + colIndex &&
                       'bg-primary opacity-40',
                   )}
+                  disabled={allowedMistakes === 0}
                 />
               ))}
             </div>
