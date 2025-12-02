@@ -3,8 +3,10 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
 import CommonCard from '../components/common/card/common-card'
+import { REPLAY_PATTER_COUNT } from '../constants/localstorage-keys'
 import { cn } from '../lib/utils'
 import { useAppStore } from '../store/app-store'
+import { removeSessionStorageItem } from '../utils/session-storage'
 
 const Onboarding = () => {
   const navigate = useNavigate()
@@ -81,6 +83,7 @@ const Onboarding = () => {
         onClick={() => {
           navigate('/home', { state: selectGrid })
           setIsStarted(true)
+          removeSessionStorageItem(REPLAY_PATTER_COUNT)
         }}
       />
     </div>

@@ -1,0 +1,1 @@
+export const REPLAY_PATTER_COUNT = 'replay_pattern_count'

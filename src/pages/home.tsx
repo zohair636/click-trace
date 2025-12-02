@@ -3,8 +3,10 @@ import { useLocation } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
 import { Label } from '../components/ui/label'
 import { Progress } from '../components/ui/progress'
+import { REPLAY_PATTER_COUNT } from '../constants/localstorage-keys'
 import { cn } from '../lib/utils'
 import { useAppStore } from '../store/app-store'
+import { getSessionStorage, setSessionStorage } from '../utils/session-storage'
 
 const Home = () => {
   const { state } = useLocation()
@@ -16,10 +18,15 @@ const Home = () => {
   }
   const [isPaused, setIsPaused] = useState(false)
   const [isPatternMatched, setIsPatternMatched] = useState(false)
+  const [replayPattern, setReplayPattern] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null)
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [currentPosition, setCurrentPosition] = useState<number | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [displayIndex, setDisplayIndex] = useState(0)
   const [allowedMistakes, setAllowedMistakes] = useState(3)
+  const [replayPatternCount, setReplayPatternCount] = useState(
+    getSessionStorage(REPLAY_PATTER_COUNT) || 0,
+  )
   const [color, setColor] = useState<'success' | 'error' | 'default'>('default')
   const setIsStarted = useAppStore((state) => state.setIsStarted)
   const isStarted = useAppStore((state) => state.isStarted)
@@ -33,10 +40,18 @@ const Home = () => {
   const totalCell = selectedGridSize * selectedGridSize
   const filledCells = selectedCell.length
   const progressValue = Math.ceil((filledCells / totalCell) * 100)
+  const pattern = randomPattern.every((value) => selectedCell.includes(value))
 
   const handleSelectCell = (rowIndex: number, colIndex: number) => {
     const value = rowIndex * selectedGridSize + colIndex
-    setSelectedIndex(value)
+    setCurrentPosition(() => {
+      const newValue = value
+      return newValue
+    })
+    setSelectedIndex(() => {
+      const randomPatternValue = randomPattern[value]
+      return randomPatternValue
+    })
     if (selectedCell.includes(value)) {
       setSelectedCell((prev) => prev.filter((cell) => cell !== value))
     } else {
@@ -99,17 +114,29 @@ const Home = () => {
     ) {
       setIsStarted(false)
       setIsPaused(false)
-      // setRandomPattern([])
-      // setDisplayIndex(0)
       setHighlightedIndex(null)
     }
   }, [displayIndex, randomPattern, setIsStarted])
 
-  const handlePatternColors = () => {
-    if (randomPattern.every((value) => selectedCell.includes(value))) {
-      setIsPatternMatched(true)
+  const handleReplayPattern = () => {
+    if (replayPatternCount === 0) {
+      setReplayPatternCount((prev: number) => {
+        const updatedValue = prev + 1
+        setSessionStorage(REPLAY_PATTER_COUNT, updatedValue)
+        return updatedValue
+      })
+      setReplayPattern(true)
+      setIsStarted(true)
+      setDisplayIndex(0)
+    } else {
+      setReplayPattern(false)
     }
-    if (randomPattern.includes(selectedIndex)) {
+  }
+
+  const handlePatternColors = () => {
+    console.log('randomPatternValue: ', selectedIndex)
+    console.log('currentPosition: ', currentPosition)
+    if (currentPosition === selectedIndex) {
       setColor('success')
       const timer = setTimeout(() => {
         setColor('default')
@@ -126,6 +153,30 @@ const Home = () => {
       return () => clearTimeout(timer)
     }
   }
+
+  // useEffect(() => {
+  //   console.log('selected index: ', selectedIndex)
+  //   console.log('current position: ', currentPosition)
+  //   if (currentPosition === selectedIndex) {
+  //     setColor('success')
+  //     const timer = setTimeout(() => {
+  //       setColor('default')
+  //     }, 800)
+
+  //     return () => clearTimeout(timer)
+  //   } else {
+  //     setAllowedMistakes((prev) => prev - 1)
+  //     setColor('error')
+  //     const timer = setTimeout(() => {
+  //       setColor('default')
+  //     }, 800)
+
+  //     return () => clearTimeout(timer)
+  //   }
+  // }, [currentPosition])
+
+  console.log('random pattern: ', randomPattern)
+  console.log('selected pattern: ', selectedCell)
 
   return (
     <div className="flex flex-col justify-center items-center h-screen">
@@ -144,13 +195,11 @@ const Home = () => {
                   onClick={() => {
                     if (isPaused) return
                     handleSelectCell(rowIndex, colIndex)
-                    handlePatternColors()
+                    // handlePatternColors()
                   }}
                   className={cn(
                     'border border-secondary md:w-24 md:h-24 sm:w-20 sm:h-20 w-16 h-16 m-1 transition-all fade-in ease-in-out',
-                    randomPattern.length > 0
-                      ? 'cursor-default'
-                      : 'cursor-pointer',
+                    isPaused ? 'cursor-default' : 'cursor-pointer',
                     selectedCell.includes(
                       rowIndex * selectedGridSize + colIndex,
                     )
@@ -160,12 +209,18 @@ const Home = () => {
                       rowIndex * selectedGridSize + colIndex &&
                       'bg-primary opacity-40',
                   )}
-                  disabled={allowedMistakes === 0}
+                  // disabled={allowedMistakes === 0}
                 />
               ))}
             </div>
           ))}
         </div>
+        <CommonButton
+          label="Replay Pattern"
+          onClick={handleReplayPattern}
+          disabled={replayPatternCount === 1 || isStarted || isPaused}
+          className="mt-4"
+        />
       </div>
     </div>
   )
