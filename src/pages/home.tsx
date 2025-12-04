@@ -18,9 +18,7 @@ const Home = () => {
   }
   const [isPaused, setIsPaused] = useState(false)
   const [isPatternMatched, setIsPatternMatched] = useState(false)
-  const [replayPattern, setReplayPattern] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null)
-  const [currentPosition, setCurrentPosition] = useState<number | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [displayIndex, setDisplayIndex] = useState(0)
   const [allowedMistakes, setAllowedMistakes] = useState(3)
@@ -40,22 +38,30 @@ const Home = () => {
   const totalCell = selectedGridSize * selectedGridSize
   const filledCells = selectedCell.length
   const progressValue = Math.ceil((filledCells / totalCell) * 100)
-  const pattern = randomPattern.every((value) => selectedCell.includes(value))
 
   const handleSelectCell = (rowIndex: number, colIndex: number) => {
     const value = rowIndex * selectedGridSize + colIndex
-    setCurrentPosition(() => {
-      const newValue = value
-      return newValue
-    })
-    setSelectedIndex(() => {
-      const randomPatternValue = randomPattern[value]
-      return randomPatternValue
-    })
     if (selectedCell.includes(value)) {
       setSelectedCell((prev) => prev.filter((cell) => cell !== value))
     } else {
       setSelectedCell((prev) => [...prev, value])
+    }
+    if (randomPattern[selectedIndex] === value) {
+      setSelectedIndex((prev) => prev + 1)
+      setColor('success')
+      const timer = setTimeout(() => {
+        setColor('default')
+      }, 800)
+
+      return () => clearTimeout(timer)
+    } else {
+      setAllowedMistakes((prev) => prev - 1)
+      setColor('error')
+      const timer = setTimeout(() => {
+        setColor('default')
+      }, 800)
+
+      return () => clearTimeout(timer)
     }
   }
 
@@ -73,7 +79,7 @@ const Home = () => {
     if (!isPaused && selectedCell.length > 0 && isPatternMatched) {
       const timer = setTimeout(() => {
         setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
-      }, 1400)
+      }, 800)
 
       return () => clearTimeout(timer)
     }
@@ -125,58 +131,10 @@ const Home = () => {
         setSessionStorage(REPLAY_PATTER_COUNT, updatedValue)
         return updatedValue
       })
-      setReplayPattern(true)
       setIsStarted(true)
       setDisplayIndex(0)
-    } else {
-      setReplayPattern(false)
     }
   }
-
-  const handlePatternColors = () => {
-    console.log('randomPatternValue: ', selectedIndex)
-    console.log('currentPosition: ', currentPosition)
-    if (currentPosition === selectedIndex) {
-      setColor('success')
-      const timer = setTimeout(() => {
-        setColor('default')
-      }, 800)
-
-      return () => clearTimeout(timer)
-    } else {
-      setAllowedMistakes((prev) => prev - 1)
-      setColor('error')
-      const timer = setTimeout(() => {
-        setColor('default')
-      }, 800)
-
-      return () => clearTimeout(timer)
-    }
-  }
-
-  // useEffect(() => {
-  //   console.log('selected index: ', selectedIndex)
-  //   console.log('current position: ', currentPosition)
-  //   if (currentPosition === selectedIndex) {
-  //     setColor('success')
-  //     const timer = setTimeout(() => {
-  //       setColor('default')
-  //     }, 800)
-
-  //     return () => clearTimeout(timer)
-  //   } else {
-  //     setAllowedMistakes((prev) => prev - 1)
-  //     setColor('error')
-  //     const timer = setTimeout(() => {
-  //       setColor('default')
-  //     }, 800)
-
-  //     return () => clearTimeout(timer)
-  //   }
-  // }, [currentPosition])
-
-  console.log('random pattern: ', randomPattern)
-  console.log('selected pattern: ', selectedCell)
 
   return (
     <div className="flex flex-col justify-center items-center h-screen">
@@ -195,7 +153,6 @@ const Home = () => {
                   onClick={() => {
                     if (isPaused) return
                     handleSelectCell(rowIndex, colIndex)
-                    // handlePatternColors()
                   }}
                   className={cn(
                     'border border-secondary md:w-24 md:h-24 sm:w-20 sm:h-20 w-16 h-16 m-1 transition-all fade-in ease-in-out',
@@ -209,7 +166,7 @@ const Home = () => {
                       rowIndex * selectedGridSize + colIndex &&
                       'bg-primary opacity-40',
                   )}
-                  // disabled={allowedMistakes === 0}
+                  disabled={allowedMistakes === 0}
                 />
               ))}
             </div>
