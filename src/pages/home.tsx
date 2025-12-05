@@ -17,7 +17,6 @@ const Home = () => {
     '6X6': 6,
   }
   const [isPaused, setIsPaused] = useState(false)
-  const [isPatternMatched, setIsPatternMatched] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [displayIndex, setDisplayIndex] = useState(0)
@@ -76,14 +75,18 @@ const Home = () => {
   }, [selectedCell])
 
   useEffect(() => {
-    if (!isPaused && selectedCell.length > 0 && isPatternMatched) {
+    const arrayMatched = randomPattern.every((value, index) => {
+      return value === selectedCell[index]
+    })
+    if (arrayMatched) {
       const timer = setTimeout(() => {
+        setRandomPattern((prev) => prev.slice(0, randomPattern.length - 1))
         setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
-      }, 800)
+      }, 1000)
 
       return () => clearTimeout(timer)
     }
-  }, [isPaused, selectedCell, isPatternMatched])
+  }, [randomPattern, selectedCell])
 
   useEffect(() => {
     if (randomPattern.length === selectedGridSize) {
@@ -155,7 +158,7 @@ const Home = () => {
                     handleSelectCell(rowIndex, colIndex)
                   }}
                   className={cn(
-                    'border border-secondary md:w-24 md:h-24 sm:w-20 sm:h-20 w-16 h-16 m-1 transition-all fade-in ease-in-out',
+                    'border border-secondary md:w-24 md:h-24 sm:w-20 sm:h-20 w-16 h-16 m-1 transition-all fade-in ease-in-out hover:opacity-40',
                     isPaused ? 'cursor-default' : 'cursor-pointer',
                     selectedCell.includes(
                       rowIndex * selectedGridSize + colIndex,
