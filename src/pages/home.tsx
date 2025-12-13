@@ -1,8 +1,12 @@
+import { CircleArrowRight, RotateCcw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import CommonButton from '../components/common/button/common-button'
+import CommonDialog from '../components/common/dialog/common-dialog'
+import CommonImage from '../components/common/image/common-image'
 import { Label } from '../components/ui/label'
 import { Progress } from '../components/ui/progress'
+import { StarFilledSvg } from '../constants/icons'
 import { REPLAY_PATTER_COUNT } from '../constants/localstorage-keys'
 import { cn } from '../lib/utils'
 import { useAppStore } from '../store/app-store'
@@ -17,6 +21,11 @@ const Home = () => {
     '6X6': 6,
   }
   const [isPaused, setIsPaused] = useState(false)
+  const [openDialog, setOpenDialog] = useState({
+    successDialog: false,
+    failureDialog: false,
+  })
+  const [isArrayMatched, setIsArrayMatched] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [displayIndex, setDisplayIndex] = useState(0)
@@ -37,6 +46,9 @@ const Home = () => {
   const totalCell = selectedGridSize * selectedGridSize
   const filledCells = selectedCell.length
   const progressValue = Math.ceil((filledCells / totalCell) * 100)
+  const arrayMatched = randomPattern.every((value, index) => {
+    return value === selectedCell[index]
+  })
 
   const handleSelectCell = (rowIndex: number, colIndex: number) => {
     const value = rowIndex * selectedGridSize + colIndex
@@ -75,18 +87,25 @@ const Home = () => {
   }, [selectedCell])
 
   useEffect(() => {
-    const arrayMatched = randomPattern.every((value, index) => {
-      return value === selectedCell[index]
-    })
-    if (arrayMatched) {
-      const timer = setTimeout(() => {
-        setRandomPattern((prev) => prev.slice(0, randomPattern.length - 1))
-        setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
-      }, 1000)
+    if (randomPattern.length > 0) {
+      if (arrayMatched) setIsArrayMatched(true)
+      if (arrayMatched) {
+        const timer = setTimeout(() => {
+          setRandomPattern((prev) => prev.slice(0, randomPattern.length - 1))
+          setSelectedCell((prev) => prev.slice(0, selectedCell.length - 1))
+        }, 1000)
 
-      return () => clearTimeout(timer)
+        return () => clearTimeout(timer)
+      }
     }
-  }, [randomPattern, selectedCell])
+  }, [arrayMatched, randomPattern, selectedCell])
+
+  useEffect(() => {
+    if (isArrayMatched && !randomPattern.length && !selectedCell.length) {
+      setOpenDialog((prev) => ({ ...prev, successDialog: true }))
+      setIsArrayMatched(false)
+    }
+  }, [isArrayMatched, randomPattern, selectedCell])
 
   useEffect(() => {
     if (randomPattern.length === selectedGridSize) {
@@ -182,6 +201,78 @@ const Home = () => {
           className="mt-4"
         />
       </div>
+      {openDialog.successDialog && (
+        <CommonDialog
+          open={openDialog.successDialog}
+          onOpenChange={(open) =>
+            setOpenDialog((prev) => ({ ...prev, successDialog: open }))
+          }
+          title="Awesome!"
+          description="You have completed the level!"
+          className=""
+        >
+          <div className="flex items-center gap-4">
+            {[...Array(5)].map((_, index) => (
+              <CommonImage
+                key={index as number}
+                src={StarFilledSvg}
+                alt="star"
+                width={20}
+                height={20}
+              />
+            ))}
+          </div>
+          <div className="flex justify-between items-center">
+            <CommonButton
+              label="Replay"
+              leftIcon={<RotateCcw />}
+              onClick={() => {}}
+              className=""
+            />
+            <CommonButton
+              label="Next Challenge"
+              rightIcon={<CircleArrowRight />}
+              onClick={() => {}}
+              className=""
+            />
+          </div>
+        </CommonDialog>
+      )}
+      <CommonDialog
+        open={!openDialog.failureDialog}
+        onOpenChange={(open) =>
+          setOpenDialog((prev) => ({ ...prev, failureDialog: open }))
+        }
+        title="So Close!"
+        description="Want to try one more time?"
+        className=""
+      >
+        <div className="flex items-center gap-4">
+          {[...Array(5)].map((_, index) => (
+            <CommonImage
+              key={index as number}
+              src={StarFilledSvg}
+              alt="star"
+              width={20}
+              height={20}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between items-center">
+          <CommonButton
+            label="Retry"
+            leftIcon={<RotateCcw />}
+            onClick={() => {}}
+            className=""
+          />
+          <CommonButton
+            label="Restart Challenge"
+            rightIcon={<CircleArrowRight />}
+            onClick={() => {}}
+            className=""
+          />
+        </div>
+      </CommonDialog>
     </div>
   )
 }

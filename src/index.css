@@ -66,6 +66,7 @@
   --primary: #193cb8;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: #262626;
+  --warning: #e4bc0e;
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
